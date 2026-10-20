@@ -1,18 +1,42 @@
-"""Un grupo de procesos que toman tareas de una cola a medida que se
-desocupan. La cola reparte por demanda: el proceso que termina antes toma la
-siguiente tarea, y ninguno se queda esperando a los demás."""
 import multiprocessing
 
 
-def con_cola(funcion, argumentos, procesos):
-    """TODO: ejecutar funcion(a) para cada a de argumentos con `procesos`
-    procesos trabajadores, y devolver los resultados en el orden de los
-    argumentos.
+def _trabajador(funcion, cola_tareas, cola_resultados):
+    while True:
+        item = cola_tareas.get()
+        if item is None:
+            break
+        indice, argumento = item
+        resultado = funcion(argumento)
+        cola_resultados.put((indice, resultado))
 
-    Dos colas: una de tareas, donde el padre pone (indice, argumento), y una
-    de resultados, donde cada trabajador pone (indice, resultado). Los
-    trabajadores terminan cuando sacan un centinela (por ejemplo None) de la
-    cola de tareas; el padre pone tantos centinelas como trabajadores. El
-    índice es lo que permite devolver los resultados en orden aunque lleguen
-    desordenados."""
-    raise NotImplementedError
+
+def con_cola(funcion, argumentos, procesos):
+    cola_tareas = multiprocessing.Queue()
+    cola_resultados = multiprocessing.Queue()
+    trabajadores = []
+    
+    # Corregido: usamos '_' o 'p_id' en el bucle para no sobrescribir la lista
+    for _ in range(procesos):
+        p = multiprocessing.Process(
+            target=_trabajador, 
+            args=(funcion, cola_tareas, cola_resultados)
+        )
+        p.start()
+        trabajadores.append(p)
+
+    for indice, arg in enumerate(argumentos):
+        cola_tareas.put((indice, arg))
+
+    for _ in range(procesos):
+        cola_tareas.put(None)
+
+    # Corregido: se lee de cola_resultados
+    resultados_desordenados = [cola_resultados.get() for _ in range(len(argumentos))]
+
+    for p in trabajadores:
+        p.join()
+
+    resultados_desordenados.sort(key=lambda x: x[0])
+
+    return [resultado for _, resultado in resultados_desordenados]

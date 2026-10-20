@@ -25,9 +25,10 @@ def abonar_sin_cerrojo(cuenta, veces, arranque):
 
 
 def abonar_con_cerrojo(cuenta, veces, arranque, cerrojo):
-    """TODO: los mismos abonos, sin perder ninguno. Los tres pasos de cada
-    abono tienen que ocurrir sin que otro hilo se meta en la mitad."""
-    raise NotImplementedError
+    arranque.wait()
+    for _ in range(veces):
+        with cerrojo:
+            cuenta.guardar(cuenta.consultar() + 1)
 
 
 def abonar_entre_hilos(hilos, veces, cerrojo=None):

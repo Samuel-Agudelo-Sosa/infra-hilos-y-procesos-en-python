@@ -1,3 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+
+
 """Tres formas de ejecutar la misma lista de tareas.
 
 Cada función recibe la función a ejecutar y la lista de argumentos, y devuelve
@@ -11,17 +14,15 @@ def en_secuencia(funcion, argumentos):
 
 
 def con_hilos(funcion, argumentos):
-    """TODO: ejecutar con varios hilos, uno por argumento.
+    num_hilos = 4
+    with ThreadPoolExecutor(max_workers=num_hilos) as pool:
 
-    Sirven threading.Thread o concurrent.futures.ThreadPoolExecutor. El orden
-    de los resultados tiene que corresponder al de los argumentos.
-    """
-    raise NotImplementedError
+        return list(pool.map(funcion, argumentos)) 
 
 
 def con_procesos(funcion, argumentos):
-    """TODO: ejecutar con varios procesos, uno por argumento.
 
-    Sirven multiprocessing.Pool o concurrent.futures.ProcessPoolExecutor.
-    """
-    raise NotImplementedError
+    num_procesos = 4
+    with ProcessPoolExecutor(max_workers=num_procesos) as pool:
+
+        return list(pool.map(funcion, argumentos)) 
